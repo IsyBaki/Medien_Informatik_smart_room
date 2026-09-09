@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "764437536717",
+    "project_id": "smartroomproject-f67ab",
+    "storage_bucket": "smartroomproject-f67ab.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:764437536717:android:fd141869420964ddce6e84",
+        "android_client_info": {
+          "package_name": "com.example.smart_room"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCjyTAn0vPjFMETByGKv7C2bgBC-GaOBTY"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

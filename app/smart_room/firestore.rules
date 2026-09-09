@@ -1,0 +1,17 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Jeder Benutzer darf nur sein eigenes Profil lesen und schreiben.
+    match /users/{uid} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+
+    // Der Smart Room ist ein geteilter physischer Raum -- jeder eingeloggte
+    // Benutzer darf Gerätestatus und Sensorhistorie lesen und schreiben.
+    match /smart_room/{document=**} {
+      allow read, write: if request.auth != null;
+    }
+  }
+}

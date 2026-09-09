@@ -1,0 +1,20 @@
+
+Im Terminal (nur einmal nötig):
+
+chmod +x start_app.sh
+
+
+
+./start_app.sh
+
+
+App starten:
+
+cd smart_room
+flutter pub get . ( wenn es probleme gibt erst das: flutter clean) 
+flutter run   oder flutter run --no-enable-impeller
+r : Änderungen übernehmen. R: hot restart. q : Terminal beenden
+
+
+
+
