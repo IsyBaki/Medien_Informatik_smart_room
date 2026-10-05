@@ -3,9 +3,9 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'register_page.dart';
 
-/// Seite zum Einloggen mit E-Mail + Passwort.
+// Seite zum Einloggen mit E-Mail + Passwort.
 class LoginPage extends StatefulWidget {
-  // Optionale Meldung, z.B. nach erfolgreicher Registrierung.
+  // optionale Meldung, z.B. nach erfolgreicher Registrierung
   final String? message;
 
   const LoginPage({super.key, this.message});
@@ -21,10 +21,10 @@ class _LoginPageState extends State<LoginPage> {
 
   bool isLoading = false;
 
-  /// Zeigt eine übergebene Meldung (z.B. nach der Registrierung) einmalig an.
   @override
   void initState() {
     super.initState();
+    // übergebene Meldung nur einmal anzeigen
     if (widget.message != null) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted) _showError(widget.message!);
@@ -39,7 +39,6 @@ class _LoginPageState extends State<LoginPage> {
     super.dispose();
   }
 
-  /// Prüft die Eingaben, meldet an und schließt bei Erfolg auf den Smart Room.
   Future<void> login() async {
     final email = emailController.text.trim();
     final password = passwordController.text;
@@ -66,14 +65,12 @@ class _LoginPageState extends State<LoginPage> {
     }
   }
 
-  /// Zeigt eine Fehler- oder Infomeldung als SnackBar an.
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
   }
 
-  /// Baut das Formular: E-Mail, Passwort, Einloggen-Button, Link zur Registrierung.
   @override
   Widget build(BuildContext context) {
     return Scaffold(

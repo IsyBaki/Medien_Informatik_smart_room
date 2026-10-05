@@ -6,36 +6,31 @@ import '../models/sensor_data.dart';
 import '../models/user_model.dart';
 import '../utils/date_range.dart';
 
-/// Kapselt sämtlichen Zugriff auf Cloud Firestore.
-///
-/// Struktur:
-/// - `users/{uid}`               -> Profil & Einstellungen pro Benutzer
-/// - `smart_room/status`         -> aktueller Gerätestatus (geteilt, 1 Raum)
-/// - `smart_room/status/history` -> historische Sensormesswerte mit Zeitstempel
-/// - `smart_room/status/events`  -> Ereignisverlauf (Schaltungen, Login)
+// Kapselt den gesamten Zugriff auf Cloud Firestore.
+//
+// Struktur:
+// - users/{uid}               -> Profil & Einstellungen pro Benutzer
+// - smart_room/status         -> aktueller Gerätestatus (geteilt, 1 Raum)
+// - smart_room/status/history -> historische Sensormesswerte mit Zeitstempel
+// - smart_room/status/events  -> Ereignisverlauf (Schaltungen, Login)
 class DatabaseService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
 
-  /// Verweis auf die Benutzer-Collection `users`.
   CollectionReference<Map<String, dynamic>> get _users =>
       _db.collection(AppConstants.usersCollection);
 
-  /// Verweis auf das eine gemeinsame Status-Dokument `smart_room/status`.
   DocumentReference<Map<String, dynamic>> get _roomStatus => _db
       .collection(AppConstants.roomCollection)
       .doc(AppConstants.roomStatusDoc);
 
-  /// Verweis auf die Sensor-Historie unter dem Status-Dokument.
   CollectionReference<Map<String, dynamic>> get _roomHistory =>
       _roomStatus.collection(AppConstants.roomHistorySubcollection);
 
-  /// Verweis auf den Ereignisverlauf unter dem Status-Dokument.
   CollectionReference<Map<String, dynamic>> get _roomEvents =>
       _roomStatus.collection(AppConstants.roomEventsSubcollection);
 
   // --- Benutzerprofil & Einstellungen ---
 
-  /// Legt nach der Registrierung das Firestore-Profil eines Benutzers an.
   Future<void> createUserProfile({
     required String uid,
     required String email,
@@ -48,7 +43,6 @@ class DatabaseService {
     });
   }
 
-  /// Liefert das Profil eines Benutzers als Live-Stream.
   Stream<UserModel?> getUserProfile(String uid) {
     return _users.doc(uid).snapshots().map((doc) {
       final data = doc.data();
@@ -57,7 +51,6 @@ class DatabaseService {
     });
   }
 
-  /// Speichert persönliche Einstellungen (z.B. bevorzugte Temperatur).
   Future<void> updateUserSettings({
     required String uid,
     double? preferredTemperature,
@@ -76,12 +69,10 @@ class DatabaseService {
 
   // --- Gerätestatus (geteilt für den Raum) ---
 
-  /// Liefert den aktuellen Gerätestatus (Licht/Lüfter/Party) als Live-Stream.
   Stream<Map<String, dynamic>> streamDeviceStatus() {
     return _roomStatus.snapshots().map((doc) => doc.data() ?? {});
   }
 
-  /// Schaltet ein Gerät (Licht/Lüfter/Party) an oder aus.
   Future<void> updateDeviceStatus({
     required String device,
     required bool state,
@@ -94,9 +85,9 @@ class DatabaseService {
     }, SetOptions(merge: true));
   }
 
-  /// Legt beim allerersten Start ein Status-Dokument mit sinnvollen
-  /// Standardwerten an, damit die App nicht dauerhaft "--" anzeigt.
-  /// Merge sorgt dafür, dass bereits vorhandene Werte nicht überschrieben werden.
+  // Legt beim allerersten Start ein Status-Dokument mit Standardwerten an,
+  // damit die App nicht dauerhaft "--" anzeigt. merge: true, damit bereits
+  // vorhandene Werte nicht überschrieben werden.
   Future<void> ensureRoomDefaults() async {
     final snapshot = await _roomStatus.get();
     if (snapshot.exists) return;
@@ -110,7 +101,6 @@ class DatabaseService {
 
   // --- Sensordaten ---
 
-  /// Liefert die zuletzt gespeicherte Sensor-Messung als Live-Stream.
   Stream<SensorData?> streamLatestSensorData() {
     return _roomHistory
         .orderBy('timestamp', descending: true)
@@ -122,13 +112,13 @@ class DatabaseService {
     });
   }
 
-  // Wird vom ESP32-Datenstrom aufgerufen, sobald echte Hardware verbunden ist.
+  // wird vom ESP32-Datenstrom aufgerufen, sobald echte Hardware verbunden ist
   Future<void> saveSensorReading(SensorData data) async {
     await _roomHistory.add(data.toMap());
   }
 
-  /// Sensormesswerte innerhalb eines Zeitraums, chronologisch aufsteigend
-  /// (praktisch für die Diagramm-Anzeige in der History-Seite).
+  // chronologisch aufsteigend, damit es sich direkt für die Diagramm-Anzeige
+  // in der History eignet
   Stream<List<SensorData>> streamSensorHistory(HistoryRange range) {
     Query<Map<String, dynamic>> query = _roomHistory.where(
       'timestamp',
@@ -147,13 +137,12 @@ class DatabaseService {
 
   // --- Ereignisverlauf ---
 
-  /// Speichert ein Ereignis (Schaltung oder Login) im Ereignisverlauf.
   Future<void> logEvent(RoomEventType type, {String? byUid}) async {
     final event = RoomEvent(type: type, timestamp: DateTime.now(), byUid: byUid);
     await _roomEvents.add(event.toMap());
   }
 
-  /// Ereignisse innerhalb eines Zeitraums, neueste zuerst (für die Liste).
+  // neueste zuerst, damit sie direkt als Liste angezeigt werden können
   Stream<List<RoomEvent>> streamEvents(HistoryRange range) {
     Query<Map<String, dynamic>> query = _roomEvents.where(
       'timestamp',

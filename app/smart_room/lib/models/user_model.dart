@@ -1,4 +1,4 @@
-/// Entspricht einem Dokument in der Firestore-Collection `users/{uid}`.
+// Entspricht einem Dokument in der Firestore-Collection users/{uid}.
 class UserModel {
   final String uid;
   final String email;
@@ -12,7 +12,6 @@ class UserModel {
     this.notificationsEnabled = true,
   });
 
-  /// Erstellt das Profil aus einem Firestore-Dokument.
   factory UserModel.fromMap(String uid, Map<String, dynamic> map) {
     return UserModel(
       uid: uid,
@@ -22,7 +21,6 @@ class UserModel {
     );
   }
 
-  /// Wandelt das Profil in ein Firestore-Format um.
   Map<String, dynamic> toMap() {
     return {
       'email': email,

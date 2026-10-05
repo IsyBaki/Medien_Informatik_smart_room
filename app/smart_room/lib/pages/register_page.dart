@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 import '../services/auth_service.dart';
 import 'login_page.dart';
 
-/// Seite zum Registrieren mit Name, E-Mail und Passwort.
+// Seite zum Registrieren mit Name, E-Mail und Passwort.
 class RegisterPage extends StatefulWidget {
   const RegisterPage({super.key});
 
@@ -28,7 +28,6 @@ class _RegisterPageState extends State<RegisterPage> {
     super.dispose();
   }
 
-  /// Legt das Konto an und schickt danach bewusst zur Login-Seite zurück.
   Future<void> register() async {
     final name = nameController.text.trim();
     final email = emailController.text.trim();
@@ -70,14 +69,12 @@ class _RegisterPageState extends State<RegisterPage> {
     }
   }
 
-  /// Zeigt eine Fehlermeldung als SnackBar an.
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(content: Text(message)),
     );
   }
 
-  /// Baut das Formular: Name, E-Mail, Passwort, Registrieren-Button.
   @override
   Widget build(BuildContext context) {
     return Scaffold(

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import '../styles/app_styles.dart';
 
-/// Zeigt zwei Buttons (AN/AUS) für ein Gerät. [isOn] bestimmt, welcher der
-/// beiden Buttons gerade als "aktiv" hervorgehoben wird.
+// zwei Buttons (AN/AUS) für ein Gerät -- isOn bestimmt, welcher Button
+// gerade als "aktiv" hervorgehoben wird
 class ControlRow extends StatelessWidget {
   final String onText;
   final String offText;
@@ -19,7 +19,6 @@ class ControlRow extends StatelessWidget {
     required this.offPressed,
   });
 
-  /// Baut die zwei nebeneinander liegenden AN/AUS-Buttons.
   @override
   Widget build(BuildContext context) {
     return Padding(
@@ -48,7 +47,7 @@ class ControlRow extends StatelessWidget {
     );
   }
 
-  /// Text mit Symbol davor -- gefüllter Haken, wenn [active], sonst nur ein Kreis.
+  // Haken-Symbol beim aktiven Button, sonst nur ein Kreis
   Widget _buttonLabel(String text, bool active) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,

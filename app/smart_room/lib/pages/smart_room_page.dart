@@ -13,7 +13,7 @@ import '../widgets/control_row.dart';
 import '../styles/app_styles.dart';
 import 'history_page.dart';
 
-/// Hauptseite nach dem Login: zeigt Sensorwerte und steuert Licht/Lüfter/Party.
+// Hauptseite nach dem Login: zeigt Sensorwerte und steuert Licht/Lüfter/Party.
 class SmartRoomPage extends StatefulWidget {
   const SmartRoomPage({super.key});
 
@@ -26,63 +26,85 @@ class _SmartRoomPageState extends State<SmartRoomPage> {
   final _databaseService = DatabaseService();
   final _esp32Service = Esp32Service();
 
-  // Uhrzeit-Anzeige aktuell deaktiviert (nicht benötigt) -- bei Bedarf die
-  // Zeilen unten sowie in initState()/dispose()/buildInformationGrid() wieder
-  // einkommentieren.
-  // String currentTime = '--:--:--';
-  // Timer? _clockTimer;
+  // aktuelle Uhrzeit (vom Handy, nicht vom ESP32) -- wird jede Sekunde
+  // aktualisiert, siehe updateClock(). Angezeigt in buildTimeBox().
+  String currentTime = '--:--:--';
+  Timer? _clockTimer;
 
   bool _esp32Connected = false;
+
+  // echter Lüfter-Status, wie ihn der ESP32 gerade meldet (unabhängig davon,
+  // ob er automatisch durch die Luftqualität oder manuell per App geschaltet
+  // wurde). null = noch keine Meldung vom ESP32 erhalten -- dann wird
+  // ersatzweise der zuletzt per App gesendete Wert aus Firestore angezeigt.
+  bool? _liveFanOn;
 
   StreamSubscription<SensorData>? _sensorSubscription;
   StreamSubscription<bool>? _connectionSubscription;
 
-  /// Startet die Firestore-Standardwerte und hört auf den ESP32-Datenstrom.
   @override
   void initState() {
     super.initState();
 
-    // updateClock();
-    // _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) => updateClock());
+    updateClock();
+    _clockTimer = Timer.periodic(const Duration(seconds: 1), (_) => updateClock());
 
     _databaseService.ensureRoomDefaults();
 
     // Sobald der ESP32 Daten schickt, landen sie in Firestore und erscheinen
     // dadurch automatisch im StreamBuilder unten (buildInformationGrid).
-    _sensorSubscription = _esp32Service.sensorDataStream.listen(
-      _databaseService.saveSensorReading,
-    );
+    // Zusätzlich merken wir uns den echten Lüfter-Status, den der ESP32
+    // mitschickt, damit die App auch automatische Schaltungen (z.B. durch
+    // schlechte Luftqualität) sofort korrekt anzeigt -- nicht nur Schaltungen
+    // über den App-Button.
+    _sensorSubscription = _esp32Service.sensorDataStream.listen((data) {
+      _databaseService.saveSensorReading(data);
+      if (data.fanOn != null && mounted) {
+        setState(() => _liveFanOn = data.fanOn);
+      }
+    });
     _connectionSubscription = _esp32Service.isConnected.listen((connected) {
       if (mounted) setState(() => _esp32Connected = connected);
     });
 
-    // Noch kein ESP32 vorhanden -- sobald die Hardware bereit ist, hier die
-    // IP-Adresse eintragen und die Verbindung aufbauen:
-    // _esp32Service.connect('192.168.1.50');
+    // Umgestellt auf den iPhone-Hotspot (vorher Heim-WLAN 192.168.0.10).
+    // IP kommt aus dem Serial Monitor ("Verbunden! IP-Adresse: ..."). Falls
+    // der Hotspot neu verbindet, kann sich diese IP wieder aendern -- dann
+    // hier einfach die neue Adresse eintragen.
+
+    // wlan zuhasue
+    _esp32Service.connect('192.168.0.9');
+
+    // IP adresse hier eingeben
+    //  handy: IP-Adresse: 172.20.10.2
+    // Maxs Handy
+    //_esp32Service.connect('10.122.68.32');
+
+    // hotspot iphone
   }
 
-  // void updateClock() {
-  //   final now = DateTime.now();
-  //
-  //   setState(() {
-  //     currentTime =
-  //         '${now.hour.toString().padLeft(2, '0')}:'
-  //         '${now.minute.toString().padLeft(2, '0')}:'
-  //         '${now.second.toString().padLeft(2, '0')}';
-  //   });
-  // }
+  void updateClock() {
+    final now = DateTime.now();
+
+    setState(() {
+      currentTime =
+          '${now.hour.toString().padLeft(2, '0')}:'
+          '${now.minute.toString().padLeft(2, '0')}:'
+          '${now.second.toString().padLeft(2, '0')}';
+    });
+  }
 
   @override
   void dispose() {
-    // _clockTimer?.cancel();
+    _clockTimer?.cancel();
     _sensorSubscription?.cancel();
     _connectionSubscription?.cancel();
     _esp32Service.dispose();
     super.dispose();
   }
 
-  /// Schaltet ein Gerät: speichert den Status in Firestore, protokolliert das
-  /// Ereignis und schickt den Befehl zusätzlich an den ESP32 (falls verbunden).
+  // speichert den Status in Firestore, protokolliert das Ereignis und
+  // schickt den Befehl zusätzlich an den ESP32 (falls verbunden)
   void toggleDevice(String device, bool value) {
     final uid = FirebaseAuth.instance.currentUser?.uid ?? '';
     _databaseService.updateDeviceStatus(
@@ -94,7 +116,6 @@ class _SmartRoomPageState extends State<SmartRoomPage> {
     _esp32Service.sendCommand(device, value);
   }
 
-  /// Ordnet Gerätename + Zustand dem passenden Ereignistyp zu.
   RoomEventType _eventTypeFor(String device, bool value) {
     switch (device) {
       case AppConstants.deviceLight:
@@ -107,7 +128,6 @@ class _SmartRoomPageState extends State<SmartRoomPage> {
     }
   }
 
-  /// Baut das Grundgerüst: Info-Kacheln, Status-Box und die Steuerung.
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -126,7 +146,12 @@ class _SmartRoomPageState extends State<SmartRoomPage> {
         builder: (context, statusSnapshot) {
           final status = statusSnapshot.data ?? {};
           final light = status[AppConstants.deviceLight] as bool? ?? false;
-          final fan = status[AppConstants.deviceFan] as bool? ?? false;
+          // echter Lüfter-Status vom ESP32 hat Vorrang (zeigt auch automatische
+          // Schaltungen durch die Luftqualität korrekt an). Solange noch keine
+          // Meldung vom ESP32 da ist, wird der letzte per App gesendete Wert
+          // aus Firestore als Ersatz angezeigt.
+          final fan =
+              _liveFanOn ?? (status[AppConstants.deviceFan] as bool? ?? false);
           final party = status[AppConstants.deviceParty] as bool? ?? false;
 
           return SingleChildScrollView(
@@ -134,6 +159,10 @@ class _SmartRoomPageState extends State<SmartRoomPage> {
             child: Column(
               children: [
                 buildInformationGrid(),
+
+                const SizedBox(height: 25),
+
+                buildTimeBox(),
 
                 const SizedBox(height: 25),
 
@@ -182,7 +211,6 @@ class _SmartRoomPageState extends State<SmartRoomPage> {
     );
   }
 
-  /// Zeigt die vier Sensor-Kacheln (Personen, Temperatur, Luftqualität, Luftfeuchtigkeit).
   Widget buildInformationGrid() {
     return StreamBuilder<SensorData?>(
       stream: _databaseService.streamLatestSensorData(),
@@ -212,17 +240,40 @@ class _SmartRoomPageState extends State<SmartRoomPage> {
               title: '💧 Luftfeuchtigkeit',
               value: data != null ? '${data.humidity.toStringAsFixed(0)}%' : '--',
             ),
-            // InfoCard(
-            //   title: '🕒 Uhrzeit',
-            //   value: currentTime,
-            // ),
           ],
         );
       },
     );
   }
 
-  /// Zeigt den aktuellen Status von Licht/Lüfter/Party als Text.
+  // eigene Box, genauso breit und im gleichen Stil wie die Status-Box darunter
+  Widget buildTimeBox() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(20),
+      decoration: boxStyle(),
+      child: Column(
+        children: [
+          const Text(
+            '🕒 Uhrzeit',
+            style: TextStyle(
+              fontSize: 22,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+          const SizedBox(height: 10),
+          Text(
+            currentTime,
+            style: const TextStyle(
+              fontSize: 32,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget buildStatusBox({
     required bool light,
     required bool fan,
@@ -259,7 +310,7 @@ class _SmartRoomPageState extends State<SmartRoomPage> {
     );
   }
 
-  // Kleiner Punkt + Text: zeigt, ob gerade eine ESP32-Verbindung besteht.
+  // kleiner Punkt + Text: zeigt, ob gerade eine ESP32-Verbindung besteht
   Widget _esp32Badge() {
     return Row(
       mainAxisSize: MainAxisSize.min,
@@ -278,10 +329,9 @@ class _SmartRoomPageState extends State<SmartRoomPage> {
     );
   }
 
-  /// Baut das Seitenmenü: Benutzername, Dashboard, History, Ausloggen.
   Widget buildDrawer() {
     final user = FirebaseAuth.instance.currentUser;
-    // Anzeigename, falls bei der Registrierung angegeben -- sonst E-Mail.
+    // Anzeigename, falls bei der Registrierung angegeben -- sonst E-Mail
     final displayName = (user?.displayName?.isNotEmpty ?? false)
         ? user!.displayName!
         : (user?.email ?? '');

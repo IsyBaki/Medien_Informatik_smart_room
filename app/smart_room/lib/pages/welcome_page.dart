@@ -6,8 +6,7 @@ import '../styles/app_styles.dart';
 import 'login_page.dart';
 import 'register_page.dart';
 
-/// Erste Seite, die nicht angemeldete Nutzer sehen.
-/// Zeigt nur den Titel + Anmelden/Registrieren, keine Raumdaten.
+// Erste Seite für nicht angemeldete Nutzer -- nur Titel + Anmelden/Registrieren.
 class WelcomePage extends StatefulWidget {
   const WelcomePage({super.key});
 
@@ -23,13 +22,13 @@ class _WelcomePageState extends State<WelcomePage>
   @override
   void initState() {
     super.initState();
-    // Sanfte, endlos wiederholte Animation für den Hintergrund-Farbverlauf.
+    // sanfte, endlos wiederholte Animation für den Hintergrund-Farbverlauf
     _gradientController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 8),
     )..repeat(reverse: true);
 
-    // Dauerhafte, langsame Bewegung der Netzwerk-Punkte im Hintergrund.
+    // langsame Bewegung der Netzwerk-Punkte im Hintergrund
     _networkController = AnimationController(
       vsync: this,
       duration: const Duration(seconds: 24),
@@ -43,14 +42,12 @@ class _WelcomePageState extends State<WelcomePage>
     super.dispose();
   }
 
-  /// Baut die Seite als Stack: Farbverlauf unten, Netzwerk-Animation darüber,
-  /// Titel/Buttons ganz oben.
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       body: Stack(
         children: [
-          // Hintergrund: animierter Farbverlauf.
+          // Hintergrund: animierter Farbverlauf
           AnimatedBuilder(
             animation: _gradientController,
             builder: (context, child) {
@@ -70,7 +67,7 @@ class _WelcomePageState extends State<WelcomePage>
             },
           ),
 
-          // Darüber: sich bewegende Punkte + Verbindungslinien ("Nerven"-Look).
+          // darüber: sich bewegende Punkte + Verbindungslinien
           Positioned.fill(
             child: AnimatedBuilder(
               animation: _networkController,
@@ -82,7 +79,7 @@ class _WelcomePageState extends State<WelcomePage>
             ),
           ),
 
-          // Ganz oben: Titel + Buttons.
+          // ganz oben: Titel + Buttons
           SafeArea(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -146,8 +143,8 @@ class _WelcomePageState extends State<WelcomePage>
   }
 }
 
-// Ein Punkt im Netzwerk -- bewegt sich sanft und geschlossen (loop-fähig)
-// um eine Basisposition, gesteuert über sin/cos statt fester Geschwindigkeit.
+// ein Punkt im Netzwerk-Hintergrund, bewegt sich leicht um eine Basisposition
+// (sin/cos statt fester Geschwindigkeit, damit die Animation sauber loopt)
 class _NetworkNode {
   final double baseX;
   final double baseY;
@@ -161,7 +158,6 @@ class _NetworkNode {
     required this.radius,
   });
 
-  /// Berechnet die aktuelle Position des Punktes für den Animationsfortschritt [t].
   Offset positionAt(double t, Size size) {
     final angle = t * 2 * math.pi;
     final dx = math.sin(angle + phase) * 0.05;
@@ -173,7 +169,7 @@ class _NetworkNode {
 class _NetworkPainter extends CustomPainter {
   final double t;
 
-  // Feste Zufallsposition (gleicher seed) -- immer dasselbe, ruhige Muster.
+  // fester seed -- immer dasselbe, ruhige Muster statt bei jedem Rebuild neu
   static final List<_NetworkNode> _nodes = List.generate(28, (i) {
     final random = math.Random(i * 97);
     return _NetworkNode(
@@ -186,7 +182,6 @@ class _NetworkPainter extends CustomPainter {
 
   _NetworkPainter({required this.t});
 
-  /// Zeichnet alle Punkte sowie Linien zwischen nahe beieinander liegenden Punkten.
   @override
   void paint(Canvas canvas, Size size) {
     final positions = _nodes.map((n) => n.positionAt(t, size)).toList();
@@ -211,7 +206,6 @@ class _NetworkPainter extends CustomPainter {
     }
   }
 
-  /// Nur neu zeichnen, wenn sich der Animationsfortschritt geändert hat.
   @override
   bool shouldRepaint(covariant _NetworkPainter oldDelegate) => oldDelegate.t != t;
 }

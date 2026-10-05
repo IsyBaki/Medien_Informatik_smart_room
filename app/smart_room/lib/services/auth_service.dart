@@ -3,20 +3,16 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/room_event.dart';
 import 'database_service.dart';
 
-/// Dünner Wrapper um FirebaseAuth: Registrierung, Login, Logout.
-/// Wandelt technische FirebaseAuthException in deutsche Fehlertexte um.
+// Dünner Wrapper um FirebaseAuth: Registrierung, Login, Logout.
+// Wandelt die FirebaseAuthException-Codes in deutsche Fehlertexte um.
 class AuthService {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final DatabaseService _databaseService = DatabaseService();
 
-  /// Meldet, ob und mit welchem Benutzer man gerade angemeldet ist.
-  /// Darauf hört der AuthGate, um zwischen Welcome-Seite und Smart Room zu wechseln.
   Stream<User?> get authStateChanges => _auth.authStateChanges();
 
-  /// Der aktuell angemeldete Benutzer (null, wenn niemand angemeldet ist).
   User? get currentUser => _auth.currentUser;
 
-  /// Legt ein neues Konto an und erstellt gleichzeitig das Firestore-Profil.
   Future<UserCredential> register({
     required String email,
     required String password,
@@ -38,7 +34,7 @@ class AuthService {
     }
   }
 
-  /// Meldet an und protokolliert dafür ein Login-Ereignis in der History.
+  // protokolliert zusätzlich ein Login-Ereignis in der History
   Future<UserCredential> login({
     required String email,
     required String password,
@@ -60,12 +56,10 @@ class AuthService {
     }
   }
 
-  /// Meldet den aktuellen Benutzer ab.
   Future<void> logout() async {
     await _auth.signOut();
   }
 
-  /// Wandelt Firebase-Fehlercodes in verständliche deutsche Meldungen um.
   String _mapError(FirebaseAuthException e) {
     switch (e.code) {
       case 'email-already-in-use':

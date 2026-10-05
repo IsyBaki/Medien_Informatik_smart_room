@@ -1,8 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-/// Alle Ereignistypen, die im Ereignisverlauf (History) protokolliert werden.
-///  nur Geräteschaltungen + Login.
+// Ereignistypen, die im Ereignisverlauf (History) protokolliert werden:
+// nur Geräteschaltungen + Login.
 enum RoomEventType {
   lightOn,
   lightOff,
@@ -12,7 +12,6 @@ enum RoomEventType {
   partyOff,
   login;
 
- /// Wandelt einen Text (String) in einen Ereignistyp um.
   static RoomEventType fromKey(String key) {
     return RoomEventType.values.firstWhere(
       (e) => e.key == key,
@@ -20,7 +19,7 @@ enum RoomEventType {
     );
   }
 
-/// Gibt den Schlüssel für Firestore zurück.
+  // Schlüssel, wie er in Firestore gespeichert wird.
   String get key {
     switch (this) {
       case RoomEventType.lightOn:
@@ -40,7 +39,6 @@ enum RoomEventType {
     }
   }
 
-/// Gibt den Titel des Ereignisses zurück.
   String get label {
     switch (this) {
       case RoomEventType.lightOn:
@@ -60,7 +58,6 @@ enum RoomEventType {
     }
   }
 
- /// Gibt eine kurze Beschreibung des Ereignisses zurück.
   String get description {
     switch (this) {
       case RoomEventType.lightOn:
@@ -80,8 +77,7 @@ enum RoomEventType {
     }
   }
 
-  /// Für die Filter-Chips im Ereignisverlauf.
-  /// Ordnet das Ereignis einer Kategorie zu.
+  // für die Filter-Chips im Ereignisverlauf
   RoomEventCategory get category {
     switch (this) {
       case RoomEventType.lightOn:
@@ -98,7 +94,6 @@ enum RoomEventType {
     }
   }
 
- /// Gibt das passende Symbol für das Ereignis zurück.
   IconData get icon {
     switch (this) {
       case RoomEventType.lightOn:
@@ -116,8 +111,7 @@ enum RoomEventType {
   }
 }
 
-/// Gruppen für die Filter-Chips im Ereignisverlauf.
-/// Kategorien für die Filter in der History.
+// Kategorien für die Filter-Chips in der History.
 enum RoomEventCategory {
   light,
   fan,
@@ -138,8 +132,7 @@ enum RoomEventCategory {
   }
 }
 
-/// Entspricht einem Dokument in `smart_room/status/events`.
-/// Modell für ein Ereignis aus Firestore.
+// Entspricht einem Dokument in smart_room/status/events.
 class RoomEvent {
   final RoomEventType type;
   final DateTime timestamp;
@@ -156,7 +149,6 @@ class RoomEvent {
     );
   }
 
-/// Wandelt das Objekt in ein Firestore-Format um.
   Map<String, dynamic> toMap() {
     return {
       'type': type.key,

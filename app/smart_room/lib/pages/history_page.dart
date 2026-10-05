@@ -8,10 +8,10 @@ import '../styles/app_styles.dart';
 import '../utils/date_range.dart';
 import '../utils/room_stats.dart';
 
-/// Zeigt vergangene Sensordaten und Ereignisse -- 3 Tabs:
-/// Sensoren (Diagramm + Zusammenfassung + Tabelle), Ereignisse (Liste mit
-/// Filter), Hinweise (Benachrichtigungen + Empfehlungen mit Ampel-Status).
-/// Ein Zeitraum-Filter oben gilt für alle drei Tabs.
+// Zeigt vergangene Sensordaten und Ereignisse -- 3 Tabs:
+// Sensoren (Diagramm + Zusammenfassung + Tabelle), Ereignisse (Liste mit
+// Filter), Hinweise (Benachrichtigungen + Empfehlungen mit Ampel-Status).
+// Der Zeitraum-Filter oben gilt für alle drei Tabs.
 class HistoryPage extends StatefulWidget {
   const HistoryPage({super.key});
 
@@ -37,7 +37,6 @@ class _HistoryPageState extends State<HistoryPage>
     super.dispose();
   }
 
-  /// Baut das Grundgerüst: Tabs oben, Zeitraum-Auswahl, darunter der aktive Tab.
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -75,7 +74,7 @@ class _HistoryPageState extends State<HistoryPage>
     );
   }
 
-  /// Dropdown zur Auswahl des Zeitraums, gilt für alle drei Tabs.
+  // Dropdown für den Zeitraum, gilt für alle drei Tabs
   Widget _buildRangeSelector() {
     return Row(
       children: [
@@ -96,7 +95,7 @@ class _HistoryPageState extends State<HistoryPage>
   }
 }
 
-// Gemeinsames Zeitstempel-Format für alle Tabs.
+// gemeinsames Zeitstempel-Format für alle Tabs
 String _formatTimestamp(DateTime dt) {
   String two(int n) => n.toString().padLeft(2, '0');
   return '${two(dt.day)}.${two(dt.month)}. ${two(dt.hour)}:${two(dt.minute)}';
@@ -104,11 +103,10 @@ String _formatTimestamp(DateTime dt) {
 
 // --- Tab 1: Sensoren ---------------------------------------------------------
 
-// Welcher Messwert gerade im Diagramm ausgewählt ist.
-enum _SensorMetric { temperature, humidity, persons }
+// welcher Messwert gerade im Diagramm ausgewählt ist
+enum _SensorMetric { temperature, humidity, persons, airQuality }
 
 extension on _SensorMetric {
-  /// Anzeigetext für die Auswahl-Chips.
   String get label {
     switch (this) {
       case _SensorMetric.temperature:
@@ -117,10 +115,11 @@ extension on _SensorMetric {
         return 'Luftfeuchtigkeit';
       case _SensorMetric.persons:
         return 'Personenanzahl';
+      case _SensorMetric.airQuality:
+        return 'Luftqualität';
     }
   }
 
-  /// Linienfarbe im Diagramm, je nach ausgewähltem Messwert.
   Color get color {
     switch (this) {
       case _SensorMetric.temperature:
@@ -129,10 +128,13 @@ extension on _SensorMetric {
         return Colors.lightBlueAccent;
       case _SensorMetric.persons:
         return Colors.purpleAccent;
+      case _SensorMetric.airQuality:
+        return Colors.greenAccent;
     }
   }
 
-  /// Holt den passenden Zahlenwert aus einer Messung.
+  // Luftqualität ist bei uns ein Text (Gut/Schlecht), daher hier auf 1/0
+  // umgerechnet, damit sie trotzdem als Linie gezeichnet werden kann
   double valueOf(SensorData d) {
     switch (this) {
       case _SensorMetric.temperature:
@@ -141,11 +143,12 @@ extension on _SensorMetric {
         return d.humidity;
       case _SensorMetric.persons:
         return d.persons.toDouble();
+      case _SensorMetric.airQuality:
+        return d.airQuality == 'Gut' ? 1.0 : 0.0;
     }
   }
 }
 
-/// Tab "Sensoren": Zusammenfassung, Diagramm und Tabelle der Messwerte.
 class _SensorsTab extends StatefulWidget {
   final DatabaseService databaseService;
   final HistoryRange range;
@@ -175,8 +178,8 @@ class _SensorsTabState extends State<_SensorsTab> {
           );
         }
 
-        // Gerätezeiten (events) werden hier nicht gebraucht -- die stehen im
-        // Hinweise-Tab, wo Sensor- und Ereignisdaten zusammen ausgewertet werden.
+        // Events werden hier nicht gebraucht -- die stehen im Hinweise-Tab,
+        // wo Sensor- und Ereignisdaten zusammen ausgewertet werden.
         final stats = RoomStats.compute(
           readings: readings,
           events: const [],
@@ -184,7 +187,7 @@ class _SensorsTabState extends State<_SensorsTab> {
           rangeEnd: widget.range.to,
         );
 
-        // Neueste zuerst, auf 30 Zeilen begrenzt (Performance bei "Gesamt").
+        // neueste zuerst, auf 30 Zeilen begrenzt (Performance bei "Gesamt")
         final recentReadings = readings.reversed.take(30).toList();
 
         return ListView(
@@ -218,7 +221,6 @@ class _SensorsTabState extends State<_SensorsTab> {
     );
   }
 
-  /// Auswahl-Chips: legen fest, welcher Messwert im Diagramm gezeigt wird.
   Widget _metricPicker() {
     return Wrap(
       spacing: 8,
@@ -232,7 +234,6 @@ class _SensorsTabState extends State<_SensorsTab> {
     );
   }
 
-  /// Baut die Diagramm-Daten für den aktuell ausgewählten Messwert.
   LineChartData _chartData(List<SensorData> readings) {
     final spots = [
       for (var i = 0; i < readings.length; i++)
@@ -266,7 +267,6 @@ class _SensorsTabState extends State<_SensorsTab> {
     );
   }
 
-  /// Zeigt die Zusammenfassung (Ø/Max/Min-Werte) für den gewählten Zeitraum.
   Widget _summaryCard(RoomStats stats) {
     return Container(
       width: double.infinity,
@@ -293,7 +293,6 @@ class _SensorsTabState extends State<_SensorsTab> {
     );
   }
 
-  /// Eine Zeile in der Zusammenfassung: Bezeichnung links, Wert rechts.
   Widget _summaryRow(String label, String value) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 6),
@@ -307,7 +306,6 @@ class _SensorsTabState extends State<_SensorsTab> {
     );
   }
 
-  /// Eine Zeile in der Sensorwerte-Tabelle: Zeitstempel + alle Messwerte.
   Widget _readingRow(SensorData r) {
     return Container(
       margin: const EdgeInsets.only(bottom: 8),
@@ -332,7 +330,6 @@ class _SensorsTabState extends State<_SensorsTab> {
 
 // --- Tab 2: Ereignisse -------------------------------------------------------
 
-/// Tab "Ereignisse": Liste aller Schaltungen/Logins mit Filter-Chips.
 class _EventsTab extends StatefulWidget {
   final DatabaseService databaseService;
   final HistoryRange range;
@@ -381,7 +378,7 @@ class _EventsTabState extends State<_EventsTab> {
     );
   }
 
-  /// Filter-Chips: "Alle" plus eine Chip pro Ereignis-Kategorie.
+  // "Alle" plus eine Chip pro Ereignis-Kategorie
   Widget _filterChips() {
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -399,7 +396,6 @@ class _EventsTabState extends State<_EventsTab> {
     );
   }
 
-  /// Ein einzelner Filter-Chip.
   Widget _chip(String label, bool selected, VoidCallback onTap) {
     return Padding(
       padding: const EdgeInsets.only(right: 8),
@@ -411,7 +407,6 @@ class _EventsTabState extends State<_EventsTab> {
     );
   }
 
-  /// Eine Zeile in der Ereignisliste: Symbol, Titel + Beschreibung, Zeitstempel.
   Widget _eventTile(RoomEvent event) {
     return Container(
       padding: const EdgeInsets.all(14),
@@ -447,7 +442,6 @@ class _EventsTabState extends State<_EventsTab> {
 
 // --- Tab 3: Hinweise (Benachrichtigungen + Empfehlungen) --------------------
 
-/// Tab "Hinweise": Ampel-Status, Benachrichtigungen und Empfehlungen.
 class _HintsTab extends StatelessWidget {
   final DatabaseService databaseService;
   final HistoryRange range;
@@ -493,7 +487,6 @@ class _HintsTab extends StatelessWidget {
     );
   }
 
-  /// Farbige Status-Zeile ganz oben (grün/gelb/rot je nach Gesamteinstufung).
   Widget _statusBadge(Severity severity) {
     late final Color color;
     late final String text;
@@ -526,7 +519,6 @@ class _HintsTab extends StatelessWidget {
     );
   }
 
-  /// Eine Box mit Titel + Liste von Hinweisen (Benachrichtigungen oder Empfehlungen).
   Widget _section(String title, IconData icon, List<Hint> items) {
     return Container(
       width: double.infinity,
@@ -549,7 +541,6 @@ class _HintsTab extends StatelessWidget {
     );
   }
 
-  /// Eine Zeile mit farbigem Punkt (je nach Einstufung) und Hinweistext.
   Widget _hintRow(Hint hint) {
     late final Color color;
     switch (hint.severity) {
@@ -581,7 +572,6 @@ class _HintsTab extends StatelessWidget {
   }
 }
 
-/// Zeigt einen zentrierten Hinweistext, wenn für den Zeitraum keine Daten vorliegen.
 class _EmptyState extends StatelessWidget {
   final String text;
 

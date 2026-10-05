@@ -1,8 +1,7 @@
-/// Zeitraum-Auswahl für die History-Seite.
+// Zeitraum-Auswahl für die History-Seite.
 enum HistoryRange { today, yesterday, last7Days, last30Days, all }
 
 extension HistoryRangeX on HistoryRange {
-  /// Anzeigetext für die Dropdown-Auswahl (z.B. "Letzte 7 Tage").
   String get label {
     switch (this) {
       case HistoryRange.today:
@@ -18,13 +17,11 @@ extension HistoryRangeX on HistoryRange {
     }
   }
 
-  /// Mitternacht des heutigen Tages -- Basis für alle Zeitraum-Berechnungen.
   DateTime get _startOfToday {
     final now = DateTime.now();
     return DateTime(now.year, now.month, now.day);
   }
 
-  /// Startzeitpunkt des Zeitraums (inklusive).
   DateTime get from {
     switch (this) {
       case HistoryRange.today:
@@ -36,12 +33,11 @@ extension HistoryRangeX on HistoryRange {
       case HistoryRange.last30Days:
         return _startOfToday.subtract(const Duration(days: 30));
       case HistoryRange.all:
-        // Praktisch "kein unteres Limit" -- vor dem Projektstart liegend.
-        return DateTime(2000);
+        return DateTime(2000); // praktisch "kein unteres Limit"
     }
   }
 
-  /// Endzeitpunkt (exklusiv). `null` bedeutet "bis jetzt".
+  // null bedeutet "bis jetzt"
   DateTime? get to {
     return this == HistoryRange.yesterday ? _startOfToday : null;
   }

@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../styles/app_styles.dart';
 
-/// Kachel für einen einzelnen Wert im Dashboard (z.B. Temperatur).
+// Kachel für einen einzelnen Wert im Dashboard (z.B. Temperatur)
 class InfoCard extends StatelessWidget {
   final String title;
   final String value;
@@ -12,7 +12,6 @@ class InfoCard extends StatelessWidget {
     required this.value,
   });
 
-  /// Baut die Kachel: Titel oben, Wert groß darunter.
   @override
   Widget build(BuildContext context) {
     return Container(

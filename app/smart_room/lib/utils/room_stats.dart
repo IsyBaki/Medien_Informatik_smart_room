@@ -1,11 +1,10 @@
 import '../models/room_event.dart';
 import '../models/sensor_data.dart';
 
-/// Ampel-Einstufung für Benachrichtigungen/Empfehlungen -- steuert die
-/// farbige Anzeige (grün/gelb/rot) im "Hinweise"-Tab.
+// Ampel-Einstufung für Benachrichtigungen/Empfehlungen -- steuert die
+// farbige Anzeige (grün/gelb/rot) im "Hinweise"-Tab.
 enum Severity { ok, warning, critical }
 
-/// Ein einzelner Hinweis-Text mit Einstufung.
 class Hint {
   final String text;
   final Severity severity;
@@ -13,9 +12,9 @@ class Hint {
   const Hint(this.text, this.severity);
 }
 
-/// Zusammengefasste Kennzahlen für einen Zeitraum -- Basis für die
-/// "Zusammenfassung" auf dem Sensoren-Tab sowie die Benachrichtigungen/
-/// Empfehlungen im "Hinweise"-Tab der History-Seite.
+// Zusammengefasste Kennzahlen für einen Zeitraum -- Basis für die
+// Zusammenfassung auf dem Sensoren-Tab sowie die Benachrichtigungen/
+// Empfehlungen im Hinweise-Tab der History-Seite.
 class RoomStats {
   final int readingCount;
   final double avgTemperature;
@@ -47,13 +46,12 @@ class RoomStats {
     required this.fanToggleCount,
   });
 
-  /// "Gut"/"Schlecht" je nachdem, was im Zeitraum öfter vorkam -- '--' ohne Daten.
+  // "Gut"/"Schlecht" je nachdem, was im Zeitraum öfter vorkam -- "--" ohne Daten
   String get averageAirQualityLabel {
     if (goodAirCount == 0 && badAirCount == 0) return '--';
     return goodAirCount >= badAirCount ? 'Gut' : 'Schlecht';
   }
 
-  /// Berechnet alle Kennzahlen aus Sensormesswerten + Ereignissen eines Zeitraums.
   factory RoomStats.compute({
     required List<SensorData> readings,
     required List<RoomEvent> events,
@@ -118,7 +116,7 @@ class RoomStats {
 
   // Summiert die Zeit zwischen "an"- und "aus"-Events. Ist das Gerät am Ende
   // des Zeitraums noch an (kein passendes "aus"-Event), zählt die Zeit bis
-  // [rangeEnd].
+  // rangeEnd.
   static Duration _onDuration(
     List<RoomEvent> events,
     RoomEventType onType,
@@ -147,7 +145,6 @@ class RoomStats {
     return total;
   }
 
-  /// Leitet Benachrichtigungen (Ampel-Status) aus den Kennzahlen ab.
   List<Hint> notifications() {
     final list = <Hint>[];
     final totalAir = goodAirCount + badAirCount;
@@ -196,7 +193,6 @@ class RoomStats {
     return list;
   }
 
-  /// Leitet einfache Handlungsempfehlungen aus den Kennzahlen ab.
   List<Hint> recommendations() {
     final list = <Hint>[];
     final totalAir = goodAirCount + badAirCount;
@@ -225,8 +221,8 @@ class RoomStats {
     return list;
   }
 
-  /// Höchste Einstufung aus einer Liste von Hinweisen -- für einen
-  /// zusammenfassenden Status ("Alles ok"/"Warnung"/"Kritisch").
+  // höchste Einstufung aus einer Liste von Hinweisen, für den
+  // zusammenfassenden Status ("Alles ok"/"Warnung"/"Kritisch")
   static Severity overallSeverity(List<Hint> hints) {
     if (hints.any((h) => h.severity == Severity.critical)) return Severity.critical;
     if (hints.any((h) => h.severity == Severity.warning)) return Severity.warning;
